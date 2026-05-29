@@ -1,6 +1,6 @@
 import styled from '@emotion/styled'
 import { useEffect, useState } from 'react'
-import { REDIRECT_URI } from './config'
+import { exchangeCodeForToken } from './auth'
 import { spotifyApi } from './spotify'
 import LoginPage from './components/LoginPage'
 import Main from './components/Main'
@@ -24,34 +24,38 @@ export default function App() {
   }
 
   useEffect(() => {
-    const hash = window.location.hash
-    let token = window.localStorage.getItem('token') ?? ''
-    const expiryTime = window.localStorage.getItem('expiryTime') ?? ''
+    const initAuth = async () => {
+      let token = window.localStorage.getItem('token') ?? ''
+      const expiryTime = window.localStorage.getItem('expiryTime') ?? ''
 
-    if (expiryTime && new Date().getTime() > Number(expiryTime)) {
-      window.localStorage.removeItem('token')
-      window.localStorage.removeItem('expiryTime')
-      token = ''
-    }
-
-    if (!token && hash) {
-      const accessTokenParam = hash
-        .substring(1)
-        .split('&')
-        .find((param) => param.startsWith('access_token='))
-
-      if (accessTokenParam) {
-        token = accessTokenParam.split('=')[1]
-        window.location.href = REDIRECT_URI
-        window.localStorage.setItem('token', token)
-        window.localStorage.setItem(
-          'expiryTime',
-          `${new Date().getTime() + 60 * 60 * 1000}`,
-        )
+      if (expiryTime && Date.now() > Number(expiryTime)) {
+        window.localStorage.removeItem('token')
+        window.localStorage.removeItem('expiryTime')
+        token = ''
       }
+
+      if (!token) {
+        const code = new URLSearchParams(window.location.search).get('code')
+        if (code) {
+          try {
+            const data = await exchangeCodeForToken(code)
+            token = data.access_token
+            window.localStorage.setItem('token', token)
+            window.localStorage.setItem(
+              'expiryTime',
+              `${Date.now() + data.expires_in * 1000}`,
+            )
+            window.history.replaceState({}, document.title, window.location.pathname)
+          } catch (error) {
+            console.error(error)
+          }
+        }
+      }
+
+      setAccessToken(token)
     }
 
-    setAccessToken(token)
+    initAuth()
   }, [])
 
   return (

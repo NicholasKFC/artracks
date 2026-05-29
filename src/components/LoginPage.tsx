@@ -1,5 +1,5 @@
 import styled from '@emotion/styled'
-import { AUTH_URL } from '../config'
+import { getAuthUrl } from '../auth'
 
 const LoginCard = styled.div({
   display: 'flex',
@@ -26,11 +26,15 @@ const LoginLink = styled.a({
 })
 
 export default function LoginPage() {
+  const handleLogin = async () => {
+    window.location.href = await getAuthUrl()
+  }
+
   return (
     <div className="flex w-full flex-1 flex-col items-center justify-center">
       <LoginCard>
         <h1 className="text-4xl font-bold">Artracks</h1>
-        <LoginLink href={AUTH_URL}>
+        <LoginLink as="button" type="button" onClick={handleLogin}>
           <div className="flex items-center">
             <div className="mr-3 h-6 w-6">
               <svg

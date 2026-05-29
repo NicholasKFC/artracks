@@ -1,6 +1,14 @@
 export const CLIENT_ID = '5795051f0e63428d98c10f833e872697'
-export const REDIRECT_URI = 'https://nicholaskfc.github.io/artracks/'
-export const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent('playlist-modify-public user-top-read')}&response_type=token`
+
+export function getRedirectUri(): string {
+  if (window.location.hostname === '127.0.0.1') {
+    // Must match Spotify dashboard exactly (no trailing slash).
+    return window.location.origin
+  }
+
+  // Production GitHub Pages URL including base path.
+  return new URL(import.meta.env.BASE_URL, window.location.origin).href
+}
 
 export interface Artist {
   id: string
